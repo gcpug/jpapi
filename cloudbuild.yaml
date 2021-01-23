@@ -37,7 +37,7 @@ steps:
       - jpsite
       - --region=asia-northeast1
       - --platform=managed
-      - --service-account=jpsite-run@$PROJECT_ID.iam.gserviceaccount.com
+      - --service-account=jpapi-run@$PROJECT_ID.iam.gserviceaccount.com
       - --max-instances=1
       - --cpu=1
       - --memory=256M
