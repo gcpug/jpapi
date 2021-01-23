@@ -29,7 +29,7 @@ steps:
       - --cache-ttl=6h
     waitFor: ['go-build', 'go-test']
   # deploy
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:319.0.0'
     entrypoint: 'gcloud'
     args:
       - run
