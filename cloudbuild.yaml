@@ -1,0 +1,49 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    id: cds-emulator
+    args: ['run', '-d', '--network=cloudbuild', '--name=cds-emulator', 'google/cloud-sdk:319.0.0', 'gcloud', 'beta', 'emulators', 'datastore', 'start', '--host-port=0.0.0.0:8081']
+  - name: jwilder/dockerize:0.6.1
+    args: ['dockerize', '-timeout=60s', '-wait=tcp://cds-emulator:8081']
+  # build
+  - name: 'golang:1.14-stretch'
+    id: go-build
+    entrypoint: 'go'
+    args: [ 'build', '.' ]
+    env:
+      - 'GO111MODULE=on'
+    waitFor: ['-']
+  - name: 'golang:1.14-stretch'
+    id: go-test
+    entrypoint: 'go'
+    args: [ 'test', '-v', './...' ]
+    env:
+      - 'GO111MODULE=on'
+      - 'DATASTORE_EMULATOR_HOST=cds-emulator:8081'
+      - 'GOOGLE_CLOUD_PROJECT=unittest'
+    waitFor: [ 'cds-emulator' ]
+  - name: 'gcr.io/kaniko-project/executor:v1.3.0'
+    id: kaniko
+    args:
+      - --destination=asia-northeast1-docker.pkg.dev/$PROJECT_ID/jpapi/$BRANCH_NAME:$COMMIT_SHA
+      - --cache=true
+      - --cache-ttl=6h
+    waitFor: ['go-build', 'go-test']
+  # deploy
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:319.0.0'
+    entrypoint: 'gcloud'
+    args:
+      - run
+      - deploy
+      - jpsite
+      - --region=asia-northeast1
+      - --platform=managed
+      - --service-account=jpapi-run@$PROJECT_ID.iam.gserviceaccount.com
+      - --max-instances=1
+      - --cpu=1
+      - --memory=256M
+      - --concurrency=8
+      - --image=asia-northeast1-docker.pkg.dev/$PROJECT_ID/jpapi/$BRANCH_NAME:$COMMIT_SHA
+    waitFor: ['kaniko']
+  # for cloud-build-local
+  - name: gcr.io/cloud-builders/docker
+    args: ['rm', '--force', 'cds-emulator']
