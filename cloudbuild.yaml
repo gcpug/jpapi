@@ -42,7 +42,7 @@ steps:
       - --cpu=1
       - --memory=256M
       - --concurrency=8
-      - --image=asia-northeast1-docker.pkg.dev/$PROJECT_ID/jpsite/$BRANCH_NAME:$COMMIT_SHA
+      - --image=asia-northeast1-docker.pkg.dev/$PROJECT_ID/jpapi/$BRANCH_NAME:$COMMIT_SHA
     waitFor: ['kaniko']
   # for cloud-build-local
   - name: gcr.io/cloud-builders/docker
